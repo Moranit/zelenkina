@@ -8,13 +8,16 @@ let rec firstd (n: int) =
 let natchislo (n: int) =
     n > 0
 
+
 // ввод числа
-let inputnumber () =
+let rec inputnumber () =
     printfn "Введите число:"
     let input = Console.ReadLine()
     match Int32.TryParse(input) with
-    | (true, n) when natchislo n -> Some n 
-    | _ -> None // если ввод некорректен
+    | (true, n) when natchislo n -> Some n  // Если ввод корректен, возвращаем число
+    | _ -> 
+        printfn "Некорректный ввод. Пожалуйста, попробуйте снова." // если ввод некорректен 
+        inputnumber ()  
 
 // Основная программа
 [<EntryPoint>]
@@ -25,5 +28,7 @@ let main argv =
         printfn "Первая цифра числа %d: %d" n digit // Выводим первую цифру
     | None ->
         printfn "Пожалуйста, введите корректное натуральное число."
+
+    0 // Возвращаем код завершения программы
 
     0 // Возвращаем код завершения программы
