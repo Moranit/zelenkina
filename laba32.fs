@@ -1,76 +1,77 @@
-﻿open System
+open System
 
-// Получение последовательности
+// 3/2 поик цифры в числе
 let readSequenceFromConsole () =
     let rec loop acc =
         printf "Введите элемент (или оставьте пустым для завершения): "
         let input = Console.ReadLine()
         if input = "" then
-            Seq.rev acc // Возвращает новую последовательность с элементами в обратном порядке
+            Seq.rev acc 
         else
-            // Проверяем, является ли введенное значение числом
             match Int32.TryParse(input) with
-            | (true, number) when number > 0 -> // Проверяем, что число натуральное (больше 0)
-                loop (number :: acc) // Добавляем введенное число к аккумулятору
+            | (true, number) when number > 0 -> 
+                loop (number :: acc) 
             | (false, _) ->
                 printfn "Ошибка: '%s' не является числом." input
-                loop acc // Продолжаем ввод
+                loop acc 
             | _ -> 
                 printfn "Некорректное число."
-                loop acc // Продолжаем ввод
+                loop acc 
     loop [] 
 
-// Функция для вывода последовательности
+
 let printSequence seq =
     printfn "Содержимое последовательности:"
-    seq |> Seq.iter (fun element -> printfn "- %d" element) // Для каждого элемента
+    seq |> Seq.iter (fun element -> printfn "- %d" element) 
 
-// Функция для проверки, содержит ли число цифру
+
 let rec containsDigit (number: int) (digit: int) : bool =
     if number = 0 then 
-        false // Если число равно 0, цифра не найдена
+        false 
     else
-        let currentDigit = number % 10 // Получаем последнюю цифру
+        let currentDigit = number % 10 
         if currentDigit = digit then 
-            true // Если последняя цифра равна искомой, возвращаем true
+            true 
         else 
-            containsDigit (number / 10) digit // Рекурсивный вызов для оставшейся части числа
+            containsDigit (number / 10) digit 
 
-// Функция для подсчета количества элементов, содержащих заданную цифру
+
 let countElementsWithDigit (numbers: seq<int>) (digit: int) =
     Seq.fold (fun acc number -> if containsDigit number digit then acc + 1 else acc) 0 numbers
 
-// Функция для ввода натурального числа
+
 let readNaturalNumberFromConsole () =
     let rec loop () =
         printf "Введите натуральное число (или оставьте пустым для завершения): "
         let input = Console.ReadLine()
         if input = "" then
-            None // Возвращаем None, если ввод пустой
+            None 
         else
             match Int32.TryParse(input) with
-            | (true, number) when number > 0 -> Some number // Если число натуральное, возвращаем его
+            | (true, number) when number > 0 -> Some number 
             | (true, _) -> 
                 printfn "Ошибка: '%s' не является натуральным числом." input
-                loop () // Продолжаем ввод
+                loop () 
             | _ -> 
                 printfn "Некорректный ввод. Введите целое число."
-                loop () // Продолжаем ввод
-    loop () // Запускаем цикл ввода
+                loop ()
+    loop () 
 
-// Главная программа
 [<EntryPoint>]
 let main argv =
-    let numbers = readSequenceFromConsole() // Читаем последовательность натуральных чисел из консоли
-    printSequence numbers // Выводим последовательность
+    let numbers = readSequenceFromConsole() 
+    printSequence numbers 
     printf "Введите цифру для поиска: "
     let digitInput = Console.ReadLine()
 
     match Int32.TryParse(digitInput) with
-    | (true, digit) when digit >= 0 && digit <= 9 -> // Проверяем, что цифра от 0 до 9
-        let count = countElementsWithDigit numbers digit
-        printfn "Количество элементов, содержащих цифру %d: %d" digit count
+    | (true, digit) when digit >= 0 && digit <= 9 -> 
+        
+        let count = lazy (countElementsWithDigit numbers digit)
+        
+        
+        printfn "Количество элементов, содержащих цифру %d: %d" digit (count.Value)
     | _ ->
         printfn "Ошибка: '%s' не является цифрой." digitInput
 
-    0 // Возвращаем 0 для завершения программы
+    0 
