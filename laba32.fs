@@ -1,6 +1,6 @@
 open System
 
-// 3/2 поик цифры в числе
+// 3/2
 let readSequenceFromConsole () =
     let rec loop acc =
         printf "Введите элемент (или оставьте пустым для завершения): "
@@ -57,21 +57,28 @@ let readNaturalNumberFromConsole () =
                 loop ()
     loop () 
 
+
+let rec readDigitFromConsole () =
+    printf "Введите цифру для поиска (0-9): "
+    let digitInput = Console.ReadLine()
+    match Int32.TryParse(digitInput) with
+    | (true, digit) when digit >= 0 && digit <= 9 -> 
+        Some digit
+    | _ ->
+        printfn "Ошибка: '%s' не является цифрой." digitInput
+        readDigitFromConsole() 
+
 [<EntryPoint>]
 let main argv =
     let numbers = readSequenceFromConsole() 
     printSequence numbers 
-    printf "Введите цифру для поиска: "
-    let digitInput = Console.ReadLine()
 
-    match Int32.TryParse(digitInput) with
-    | (true, digit) when digit >= 0 && digit <= 9 -> 
-        
-        let count = lazy (countElementsWithDigit numbers digit)
-        
-        
-        printfn "Количество элементов, содержащих цифру %d: %d" digit (count.Value)
-    | _ ->
-        printfn "Ошибка: '%s' не является цифрой." digitInput
-
-    0 
+    let digit = readDigitFromConsole() 
+    match digit with
+    | Some d -> 
+        let count = lazy (countElementsWithDigit numbers d)
+        printfn "Количество элементов, содержащих цифру %d: %d" d (count.Value)
+    | None -> 
+        printfn "Запрос цифры завершён."
+    
+    0
