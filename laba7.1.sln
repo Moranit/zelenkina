@@ -1,25 +1,1017 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.13.35825.156 d17.13
-MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "laba7.1", "laba7.1\laba7.1.csproj", "{63B4350F-6C2C-40DA-B44E-DF4BCD2FE14B}"
-EndProject
-Global
-	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Any CPU = Debug|Any CPU
-		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{63B4350F-6C2C-40DA-B44E-DF4BCD2FE14B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{63B4350F-6C2C-40DA-B44E-DF4BCD2FE14B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{63B4350F-6C2C-40DA-B44E-DF4BCD2FE14B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{63B4350F-6C2C-40DA-B44E-DF4BCD2FE14B}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {2DDFDF6A-A8D7-40DD-88E4-CF009AA5158D}
-	EndGlobalSection
-EndGlobal
+using System;
+using System.IO;
+using System.Collections.Generic;
+using System.Xml.Serialization;
+using System.Text;
+namespace laba7._1
+{
+    public class Tasks
+    {
+
+        private string _filePath;
+        private string _sourceFilePath;
+        private string _destFilePath;
+
+        public Tasks(string filePath)
+        {
+            _filePath = filePath;
+            if (!File.Exists(_filePath))
+            {
+                throw new FileNotFoundException($"Файл {_filePath} не найден!");
+            }
+        }
+
+        public Tasks(string sourceFilePath, string destFilePath)
+        {
+            _sourceFilePath = sourceFilePath;
+            _destFilePath = destFilePath;
+            if (!File.Exists(_sourceFilePath))
+            {
+                throw new FileNotFoundException($"Файл {_sourceFilePath} не найден!");
+            }
+        }
+
+        public bool ContainsNumber(int number)
+        {
+            using (StreamReader reader = new StreamReader(_filePath))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (int.TryParse(line, out int num) && num == number)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        public int SumMultiplesOf(int k)
+        {
+            int sum = 0;
+            using (StreamReader reader = new StreamReader(_filePath))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    string[] numbers = line.Split([' '], StringSplitOptions.RemoveEmptyEntries);
+                    foreach (string numStr in numbers)
+                    {
+                        if (int.TryParse(numStr, out int num) && num % k == 0)
+                        {
+                            sum += num;
+                        }
+                    }
+                }
+            }
+            return sum;
+        }
+
+        public void CopyLinesWithoutDigits()
+        {
+            using (StreamReader reader = new StreamReader(_sourceFilePath))
+            using (StreamWriter writer = new StreamWriter(_destFilePath))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    if (!ContainsDigits(line))
+                    {
+                        writer.WriteLine(line);
+                    }
+                }
+            }
+        }
+
+
+        private bool ContainsDigits(string line)
+        {
+            foreach (char c in line)
+            {
+                if (char.IsDigit(c))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+
+
+        public void RemoveDuplicateNumbers()
+        {
+            HashSet<int> uniqueNumbers = new HashSet<int>();
+
+
+            using (BinaryReader reader = new BinaryReader(File.Open(_sourceFilePath, FileMode.Open)))
+            {
+                while (reader.BaseStream.Position < reader.BaseStream.Length)
+                {
+                    int num = reader.ReadInt32();
+                    uniqueNumbers.Add(num);
+                }
+            }
+
+
+            using (BinaryWriter writer = new BinaryWriter(File.Open(_destFilePath, FileMode.Create)))
+            {
+                foreach (int num in uniqueNumbers)
+                {
+                    writer.Write(num);
+                }
+            }
+        }
+
+
+        public void PrintSourceFileContent()
+        {
+            Console.WriteLine($"Содержимое исходного файла {_sourceFilePath}:");
+            using (BinaryReader reader = new BinaryReader(File.Open(_sourceFilePath, FileMode.Open)))
+            {
+                while (reader.BaseStream.Position < reader.BaseStream.Length)
+                {
+                    Console.Write(reader.ReadInt32() + " ");
+                }
+                Console.WriteLine();
+            }
+        }
+
+
+        public void PrintDestinationFileContent()
+        {
+            Console.WriteLine($"\nСодержимое нового файла {_destFilePath}:");
+            using (BinaryReader reader = new BinaryReader(File.Open(_destFilePath, FileMode.Open)))
+            {
+                while (reader.BaseStream.Position < reader.BaseStream.Length)
+                {
+                    Console.Write(reader.ReadInt32() + " ");
+                }
+                Console.WriteLine();
+            }
+        }
+
+
+        public static void GenerateTestFile(string filePath, int numbersCount)
+        {
+            Random random = new Random();
+            using (BinaryWriter writer = new BinaryWriter(File.Open(filePath, FileMode.Create)))
+            {
+                for (int i = 0; i < numbersCount; i++)
+                {
+                    writer.Write(random.Next(1, 10));
+                }
+            }
+        }
+
+        //    // Задание 5
+        [Serializable]
+        public struct Toy
+        {
+            public string Name;
+            public decimal Price;
+            public int MinAge;
+            public int MaxAge;
+
+            public override string ToString()
+            {
+                return $"{Name} (Цена: {Price} руб., Возраст: {MinAge}-{MaxAge} лет)";
+            }
+        }
+
+        public class ToyFileTasks
+        {
+            private string _filePath;
+
+            public ToyFileTasks(string filePath)
+            {
+                _filePath = filePath;
+            }
+
+
+            public void WriteToysToBinaryFile(List<Toy> toys)
+            {
+
+                XmlSerializer serializer = new XmlSerializer(typeof(List<Toy>));
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    serializer.Serialize(memoryStream, toys);
+                    byte[] xmlData = memoryStream.ToArray();
+
+
+                    using (BinaryWriter writer = new BinaryWriter(File.Open(_filePath, FileMode.Create)))
+                    {
+                        writer.Write(xmlData.Length);
+                        writer.Write(xmlData);
+                    }
+                }
+            }
+
+
+            public List<Toy> ReadToysFromBinaryFile()
+            {
+                if (!File.Exists(_filePath))
+                    throw new FileNotFoundException($"Файл {_filePath} не найден!");
+
+                using (BinaryReader reader = new BinaryReader(File.Open(_filePath, FileMode.Open)))
+                {
+                    int length = reader.ReadInt32();
+                    byte[] xmlData = reader.ReadBytes(length);
+
+
+                    XmlSerializer serializer = new XmlSerializer(typeof(List<Toy>));
+                    using (MemoryStream memoryStream = new MemoryStream(xmlData))
+                    {
+                        return (List<Toy>)serializer.Deserialize(memoryStream);
+                    }
+                }
+            }
+
+
+            public List<Toy> FindAffordableToys(decimal maxPrice, int childAge)
+            {
+                var toys = ReadToysFromBinaryFile();
+                var result = new List<Toy>();
+
+                foreach (var toy in toys)
+                {
+                    if (toy.Price <= maxPrice && childAge >= toy.MinAge && childAge <= toy.MaxAge)
+                    {
+                        result.Add(toy);
+                    }
+                }
+
+                return result;
+            }
+
+
+            public static List<Toy> GenerateTestToys(int count)
+            {
+                var toys = new List<Toy>();
+                var random = new Random();
+                string[] names = { "Кукла", "Машинка", "Конструктор", "Мяч", "Пазл" };
+
+                for (int i = 0; i < count; i++)
+                {
+                    toys.Add(new Toy
+                    {
+                        Name = names[random.Next(names.Length)],
+                        Price = random.Next(100, 2001),
+                        MinAge = random.Next(1, 4),
+                        MaxAge = random.Next(4, 10)
+                    });
+                }
+
+                return toys;
+            }
+
+            //    // Задание 6
+            public class ListTasks
+            {
+
+                public static List<T> RemoveAllOccurrences<T>(List<T> list, T value)
+                {
+                    List<T> newList = [.. list];
+                    newList.RemoveAll(item => item.Equals(value));
+                    return newList;
+                }
+
+
+                public static List<int> GenerateTestIntList(int count)
+                {
+                    Random random = new Random();
+                    List<int> list = new List<int>();
+                    for (int i = 0; i < count; i++)
+                    {
+                        list.Add(random.Next(1, 6));
+                    }
+                    return list;
+                }
+            }
+
+            public class LinkedListTasks
+            {
+
+                public static LinkedList<T> ReverseBetweenFirstAndLast<T>(LinkedList<T> list, T element)
+                {
+
+                    LinkedList<T> newList = new(list);
+
+
+                    LinkedListNode<T> first = null;
+                    LinkedListNode<T> last = null;
+
+                    var current = newList.First;
+                    while (current != null)
+                    {
+                        if (current.Value.Equals(element))
+                        {
+                            if (first == null) first = current;
+                            last = current;
+                        }
+                        current = current.Next;
+                    }
+
+
+                    if (first != null && last != null && first != last)
+                    {
+
+                        var values = new List<T>();
+                        current = first.Next;
+                        while (current != null && current != last)
+                        {
+                            values.Add(current.Value);
+                            current = current.Next;
+                        }
+
+
+                        values.Reverse();
+                        current = first.Next;
+                        int index = 0;
+                        while (current != null && current != last)
+                        {
+                            current.Value = values[index++];
+                            current = current.Next;
+                        }
+                    }
+
+                    return newList;
+                }
+
+
+                public static LinkedList<int> GenerateTestLinkedList(int count)
+                {
+                    Random random = new Random();
+                    LinkedList<int> list = new LinkedList<int>();
+                    for (int i = 0; i < count; i++)
+                    {
+                        list.AddLast(random.Next(1, 6));
+                    }
+                    return list;
+                }
+            }
+
+
+            public class HashSetTasks
+            {
+
+                public static void AnalyzeMovieViews(Dictionary<string, HashSet<string>> movieViewers, string[] allViewers)
+                {
+
+                    HashSet<string> allViewersSet = new HashSet<string>();
+                    foreach (string viewer in allViewers)
+                    {
+                        allViewersSet.Add(viewer);
+                    }
+
+                    Console.WriteLine("Результаты анализа:");
+                    Console.WriteLine("------------------");
+
+
+                    foreach (KeyValuePair<string, HashSet<string>> movie in movieViewers)
+                    {
+                        string movieName = movie.Key;
+                        HashSet<string> viewers = movie.Value;
+
+
+                        bool allWatched = true;
+                        foreach (string viewer in allViewersSet)
+                        {
+                            if (!viewers.Contains(viewer))
+                            {
+                                allWatched = false;
+                                break;
+                            }
+                        }
+
+
+                        bool noneWatched = viewers.Count == 0;
+
+
+                        string status;
+                        if (allWatched)
+                        {
+                            status = "посмотрели все зрители";
+                        }
+                        else if (noneWatched)
+                        {
+                            status = "не посмотрел никто";
+                        }
+                        else
+                        {
+                            status = "посмотрели некоторые зрители";
+                        }
+
+                        Console.WriteLine($"Фильм '{movieName}': {status}");
+                    }
+                }
+
+
+                public static Dictionary<string, HashSet<string>> GenerateTestMovieData()
+                {
+                    var random = new Random();
+                    string[] viewers = { "Иванов", "Петров", "Сидоров", "Кузнецов" };
+                    string[] movies = { "Матрица", "Терминатор", "Аватар", "Интерстеллар" };
+
+                    var movieViewers = new Dictionary<string, HashSet<string>>();
+
+                    foreach (string movie in movies)
+                    {
+
+                        int viewersCount = random.Next(0, viewers.Length + 1);
+                        var selectedViewers = new HashSet<string>();
+
+                        List<int> indexes = new List<int>();
+                        for (int i = 0; i < viewers.Length; i++)
+                        {
+                            indexes.Add(i);
+                        }
+
+
+                        for (int i = 0; i < indexes.Count; i++)
+                        {
+                            int j = random.Next(i, indexes.Count);
+                            int temp = indexes[i];
+                            indexes[i] = indexes[j];
+                            indexes[j] = temp;
+                        }
+
+                        for (int i = 0; i < viewersCount; i++)
+                        {
+                            selectedViewers.Add(viewers[indexes[i]]);
+                        }
+
+                        movieViewers[movie] = selectedViewers;
+                    }
+
+                    return movieViewers;
+                }
+            }
+
+
+            public class ConsonantAnalyzer
+            {
+
+                private static readonly char[] VoicedConsonants =
+                { 'б', 'в', 'г', 'д', 'ж', 'з', 'й', 'л', 'м', 'н', 'р' };
+
+
+                public static void AnalyzeText(string filePath)
+                {
+
+                    string text = File.ReadAllText(filePath, Encoding.UTF8);
+
+
+                    string[] words = SplitTextIntoWords(text);
+
+                    Dictionary<char, int> consonantCounts = new Dictionary<char, int>();
+
+
+                    foreach (string word in words)
+                    {
+
+                        HashSet<char> consonantsInWord = new HashSet<char>();
+
+
+                        foreach (char c in word.ToLower())
+                        {
+
+                            if (IsVoicedConsonant(c))
+                            {
+                                consonantsInWord.Add(c);
+                            }
+                        }
+
+
+                        foreach (char consonant in consonantsInWord)
+                        {
+                            if (consonantCounts.ContainsKey(consonant))
+                            {
+                                consonantCounts[consonant]++;
+                            }
+                            else
+                            {
+                                consonantCounts[consonant] = 1;
+                            }
+                        }
+                    }
+
+
+                    List<char> result = new List<char>();
+                    foreach (KeyValuePair<char, int> pair in consonantCounts)
+                    {
+                        if (pair.Value > 1)
+                        {
+                            result.Add(pair.Key);
+                        }
+                    }
+
+                    result.Sort();
+
+
+                    Console.WriteLine("Звонкие согласные, встречающиеся в нескольких словах:");
+                    foreach (char consonant in result)
+                    {
+                        Console.Write(consonant + " ");
+                    }
+                    Console.WriteLine();
+                }
+
+
+                private static string[] SplitTextIntoWords(string text)
+                {
+                    List<string> words = new List<string>();
+                    StringBuilder currentWord = new StringBuilder();
+
+                    foreach (char c in text)
+                    {
+                        if (char.IsLetter(c))
+                        {
+                            currentWord.Append(c);
+                        }
+                        else if (currentWord.Length > 0)
+                        {
+                            words.Add(currentWord.ToString());
+                            currentWord.Clear();
+                        }
+                    }
+
+
+                    if (currentWord.Length > 0)
+                    {
+                        words.Add(currentWord.ToString());
+                    }
+
+                    return words.ToArray();
+                }
+
+
+                private static bool IsVoicedConsonant(char c)
+                {
+                    foreach (char consonant in VoicedConsonants)
+                    {
+                        if (c == consonant)
+                        {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            }
+            public class PhoneAnalyzer
+            {
+              
+                public static void AnalyzePhoneDataFromFile(string filePath)
+                {
+                    try
+                    {
+                        
+                        if (!File.Exists(filePath))
+                        {
+                            Console.WriteLine($"Файл {filePath} не найден!");
+                            return;
+                        }
+
+                     
+                        string[] employeeData = File.ReadAllLines(filePath);
+
+                    
+                        if (employeeData.Length == 0)
+                        {
+                            Console.WriteLine("Файл не содержит данных");
+                            return;
+                        }
+
+                        AnalyzePhoneData(employeeData);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Ошибка при чтении файла: {ex.Message}");
+                    }
+                }
+
+             
+                private static void AnalyzePhoneData(string[] employeeData)
+                {
+                    Dictionary<string, int> departmentCounts = new Dictionary<string, int>();
+
+                    foreach (string line in employeeData)
+                    {
+                        string[] parts = line.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+                        if (parts.Length < 3) continue;
+
+                        string phone = parts[2];
+                        string departmentKey = phone.Length >= 5 ? phone.Substring(0, 5) : phone;
+
+                        if (departmentCounts.ContainsKey(departmentKey))
+                        {
+                            departmentCounts[departmentKey]++;
+                        }
+                        else
+                        {
+                            departmentCounts[departmentKey] = 1;
+                        }
+                    }
+
+                    if (departmentCounts.Count == 0)
+                    {
+                        Console.WriteLine("Нет данных для анализа");
+                        return;
+                    }
+
+                    int totalEmployees = 0;
+                    foreach (var count in departmentCounts.Values)
+                    {
+                        totalEmployees += count;
+                    }
+
+                    double average = (double)totalEmployees / departmentCounts.Count;
+                    Console.WriteLine($"Среднее количество сотрудников в подразделении: {average:F2}");
+                }
+            }
+        }
+    }
+    
+}
+using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+using laba7._1;
+using static laba7._1.Tasks;
+using static laba7._1.Tasks.ToyFileTasks;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        while (true)
+        {
+            Console.WriteLine($"Выберите задание (1-10) или введите 'exit' для выхода: " +
+                "\n 1 - Найти число в файле. " +
+                "\n 2 - Вычислить сумму элементов, которые кратны заданному числу k " +
+                "\n 3 - Переписать в другой файл строки, в которых нет цифр. " +
+                "\n 4 - Из исходного файла получить новый файл, исключив повторные вхождения чисел." +
+                "\n 5 - Игрушки с ценой k и возрастом ребенка" +
+                "\n 6 - Удаление из списка L все элементы с указанным значением" +
+                "\n 7 - В списке L переставить в обратном порядке все элементы " +
+                "\n 8 - Перечень фильмов" +
+                "\n 9 - Напечатать в алфавитном порядке все звонкие согласные буквы, которые входят более чем в одно слово." +
+                "\n 10 - Номера телефонов");
+            string choice = Console.ReadLine();
+            if (choice.ToLower() == "exit") break;
+
+            try
+            {
+                switch (choice)
+                {
+                    case "1":
+                        Task1();
+                        break;
+                    case "2":
+                        Task2();
+                        break;
+                    case "3":
+                        Task3();
+                        break;
+                    case "4":
+                        Task4();
+                        break;
+                    case "5":
+                        Task5();
+                        break;
+                    case "6":
+                        Task6();
+                        break;
+                    case "7":
+                        Task7();
+                        break;
+                    case "8":
+                        Task8();
+                        break;
+                    case "9":
+                        Task9();
+                        break;
+                    case "10":
+                        Task10();
+                        break;
+                    default:
+                        Console.WriteLine("Неверный выбор. Пожалуйста, выберите от 1 до 8.");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка: {ex.Message}");
+            }
+        }
+    }
+    static void Task1()
+    {
+        //// Задание 1
+        const string FilePath = "C:\\лабы\\TextFile1.txt";
+
+        try
+        {
+        
+            Tasks task = new Tasks(FilePath);
+
+         
+            Console.Write("Введите число для поиска: ");
+            int numberToFind = int.Parse(Console.ReadLine());
+
+ 
+            bool isFound = task.ContainsNumber(numberToFind);
+            Console.WriteLine($"Число {numberToFind} {(isFound ? "найдено" : "не найдено")}.");
+        }
+        catch (FileNotFoundException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+
+        Console.ReadKey();
+    }
+
+    static void Task2()
+    {
+        /////задание 2
+
+        const string FilePath1 = "C:\\лабы\\TextFile2.txt"; 
+
+        try
+        {
+          
+            Tasks task = new Tasks(FilePath1);
+
+
+
+           
+            Console.Write("Введите число k (для поиска кратных чисел): ");
+            int k = int.Parse(Console.ReadLine());
+
+         
+            int sum = task.SumMultiplesOf(k);
+            Console.WriteLine($"Сумма чисел, кратных {k}: {sum}");
+        }
+        catch (FileNotFoundException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+
+        Console.ReadKey();
+    }
+
+    static void Task3()
+    {
+        ////// Задание 3
+
+        const string SourceFile = "C:\\лабы\\source.txt";   
+        const string DestFile = "C:\\лабы\\output.txt";     
+
+        try
+        {
+        
+            Tasks task = new Tasks(SourceFile, DestFile);
+
+
+
+    
+            task.CopyLinesWithoutDigits();
+
+   
+            task.PrintDestinationFileContent();
+
+            Console.WriteLine("\nГотово! Строки без цифр сохранены в файл.");
+        }
+        catch (FileNotFoundException ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+
+        Console.ReadKey();
+    }
+    static void Task4()
+    {
+        /// Задание 4
+        const string BinarySourceFile = "C:\\лабы\\binary_source.bin";
+        const string BinaryOutputFile = "C:\\лабы\\binary_output.bin";
+
+        try
+        {
+        
+            Tasks.GenerateTestFile(BinarySourceFile, 20);
+
+
+            var task4 = new Tasks(BinarySourceFile, BinaryOutputFile);
+
+            Console.WriteLine("Исходный файл (возможны повторы):");
+            task4.PrintSourceFileContent();
+
+            task4.RemoveDuplicateNumbers();
+
+            Console.WriteLine("\nРезультат (без повторов):");
+            task4.PrintDestinationFileContent();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+
+        Console.ReadKey();
+    }
+
+    static void Task5()
+    {
+        //// Задание 5
+        const string ToyFilePath = "C:\\лабы\\toys.bin";
+
+        try
+        {
+            var toyTasks = new ToyFileTasks(ToyFilePath);
+
+    
+            var testToys = ToyFileTasks.GenerateTestToys(10);
+            toyTasks.WriteToysToBinaryFile(testToys);
+
+
+            Console.WriteLine("Все игрушки в файле:");
+            foreach (var toy in toyTasks.ReadToysFromBinaryFile())
+            {
+                Console.WriteLine(toy);
+            }
+
+         
+            Console.Write("\nВведите максимальную цену: ");
+            decimal maxPrice = decimal.Parse(Console.ReadLine());
+            Console.Write("Введите возраст ребенка: ");
+            int age = int.Parse(Console.ReadLine());
+
+            var affordableToys = toyTasks.FindAffordableToys(maxPrice, age);
+            Console.WriteLine("\nПодходящие игрушки:");
+            foreach (var toy in affordableToys)
+            {
+                Console.WriteLine(toy);
+            }
+
+            if (affordableToys.Count == 0)
+            {
+                Console.WriteLine("Нет подходящих игрушек");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+
+        Console.ReadKey();
+    }
+
+
+    static void Task6()
+    {
+        //// Задание 6
+        try
+        {
+
+            var numbers = ListTasks.GenerateTestIntList(10);
+            Console.WriteLine("Исходный список:");
+            Console.WriteLine(string.Join(", ", numbers));
+
+          
+            Console.Write("Введите значение для удаления: ");
+            int valueToRemove = int.Parse(Console.ReadLine());
+
+            
+            var filteredList = ListTasks.RemoveAllOccurrences(numbers, valueToRemove);
+
+      
+            Console.WriteLine("\nСписок после удаления:");
+            Console.WriteLine(string.Join(", ", filteredList));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+
+        Console.ReadKey();
+    }
+
+    static void Task7()
+    {
+
+        try
+        {
+        
+            var list = LinkedListTasks.GenerateTestLinkedList(10);
+            Console.WriteLine("Исходный список:");
+            Console.WriteLine(string.Join(", ", list));
+
+          
+            Console.Write("Введите значение E: ");
+            int element = int.Parse(Console.ReadLine());
+
+            
+            var reversedList = LinkedListTasks.ReverseBetweenFirstAndLast(list, element);
+
+           
+            Console.WriteLine("\nСписок после обработки:");
+            Console.WriteLine(string.Join(", ", reversedList));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+
+        Console.ReadKey();
+    }
+
+    static void Task8()
+    {
+        //// Задание 8
+        try
+        {
+
+            var allViewers = new[] { "Иванов", "Петров", "Сидоров", "Кузнецов" };
+            var movieViewers = HashSetTasks.GenerateTestMovieData();
+
+      
+            Console.WriteLine("\nИсходные данные о просмотрах:");
+            foreach (var movie in movieViewers)
+            {
+                Console.Write($"{movie.Key}: ");
+                bool first = true;
+                foreach (string viewer in movie.Value)
+                {
+                    if (!first) Console.Write(", ");
+                    Console.Write(viewer);
+                    first = false;
+                }
+                Console.WriteLine();
+            }
+
+  
+            Console.WriteLine("\nАнализ просмотров:");
+            HashSetTasks.AnalyzeMovieViews(movieViewers, allViewers);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+
+        Console.ReadKey();
+    }
+
+    static void Task9()
+    {
+        try
+        {
+            
+            const string filePath = "C:\\лабы\\text.txt";
+
+    
+            File.WriteAllText(filePath, "Это текст с повторяющимися звонкими согласными. Буквы б, в, г встречаются часто.", Encoding.UTF8);
+
+      
+            ConsonantAnalyzer.AnalyzeText(filePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+
+        Console.ReadKey();
+    }
+    static void Task10()
+    {
+        try
+        {
+ 
+            const string filePath = "C:\\лабы\\employees.txt";
+
+            Console.WriteLine($"Чтение данных из файла: {filePath}");
+            PhoneAnalyzer.AnalyzePhoneDataFromFile(filePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex.Message}");
+        }
+
+        Console.ReadKey();
+    }
+
+
+}
+
+
