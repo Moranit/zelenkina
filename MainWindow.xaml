@@ -1,0 +1,79 @@
+﻿<Window x:Class="LineSegmentApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:LineSegmentApp"
+        mc:Ignorable="d"
+        Title="Line Segment Operations" Height="600" Width="800">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Segment Input -->
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Segment coordinates:" Margin="0,0,10,10" FontWeight="Bold"/>
+        <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBox x:Name="txtX1" Width="80" Margin="0,0,0,0" Text="0"/>
+            <TextBox x:Name="txtX2" Width="80" Text="0"/>
+        </StackPanel>
+
+        <!-- Create Segment Button -->
+        <Button Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Content="Create Segment" 
+                Click="CreateSegment_Click" Margin="0,0,0,20" Padding="10,5"/>
+
+        <!-- Current Segment Display -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="Current segment:" Margin="0,0,10,10"/>
+        <TextBlock Grid.Row="2" Grid.Column="1" x:Name="txtCurrentSegment" Margin="0,0,0,10"/>
+
+        <!-- Contains Number Check -->
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="Check if contains number:" Margin="0,0,10,10"/>
+        <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBox x:Name="txtCheckNumber" Width="80" Margin="0,0,10,0"/>
+            <Button Content="Check" Click="CheckContains_Click" Padding="5,2"/>
+            <TextBlock x:Name="txtContainsResult" Margin="10,0,0,0"/>
+        </StackPanel>
+
+        <!-- Operations -->
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="Operations:" Margin="0,0,10,10" FontWeight="Bold"/>
+        <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,10">
+            <Button Content="Get Length (!segment)" Click="GetLength_Click" Margin="0,0,0,5" HorizontalAlignment="Left"/>
+            <Button Content="Increment (++segment)" Click="IncrementSegment_Click" Margin="0,0,0,5" HorizontalAlignment="Left"/>
+            <Button Content="Explicit to int ((int)segment)" Click="ExplicitToInt_Click" Margin="0,0,0,5" HorizontalAlignment="Left"/>
+            <Button Content="Implicit to double (segment to double)" Click="ImplicitToDouble_Click" Margin="0,0,0,5" HorizontalAlignment="Left"/>
+        </StackPanel>
+
+        <!-- Add Number -->
+        <TextBlock Grid.Row="5" Grid.Column="0" Text="Add number to segment:" Margin="0,0,10,10"/>
+        <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBox x:Name="txtAddNumber" Width="80" Margin="0,0,10,0"/>
+            <Button Content="Segment + Number" Click="SegmentPlusNumber_Click" Padding="5,2" Margin="0,0,10,0"/>
+            <Button Content="Number + Segment" Click="NumberPlusSegment_Click" Padding="5,2"/>
+        </StackPanel>
+
+        <!-- Comparison -->
+        <TextBlock Grid.Row="6" Grid.Column="0" Text="Compare segment with number:" Margin="0,0,10,10"/>
+        <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBox x:Name="txtCompareNumber" Width="80" Margin="0,0,10,0"/>
+            <Button Content="Segment Number" Click="SegmentLessThan_Click" Padding="5,2" Margin="0,0,10,0"/>
+            <Button Content="Segment > Number" Click="SegmentGreaterThan_Click" Padding="5,2"/>
+        </StackPanel>
+
+        <!-- Results -->
+        <TextBlock Grid.Row="7" Grid.Column="0" Text="Results:" Margin="0,0,10,0" FontWeight="Bold"/>
+        <TextBox Grid.Row="7" Grid.Column="1" x:Name="txtResults" IsReadOnly="True" 
+                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                 TextWrapping="Wrap" AcceptsReturn="True" Height="150"/>
+    </Grid>
+</Window>
