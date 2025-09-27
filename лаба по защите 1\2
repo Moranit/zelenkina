@@ -1,0 +1,167 @@
+#include <windows.h>
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <locale>
+
+using namespace std;
+
+const int n = 10, m = 2; // н строк, м столбцов
+float matrix[n][m];        // матрица вещественных чисел
+float row_averages[n];     // массив для средних значений 
+int row_numbers[n];        // номера строк
+
+
+DWORD WINAPI fill_row(LPVOID param)
+{
+    int* prow_num = (int*)param;
+    int row_num = *prow_num;
+
+    
+    unsigned int seed = time(nullptr) + row_num * 1000 + GetCurrentThreadId();
+    srand(seed);
+
+    
+    for (int j = 0; j < m; j++)
+        matrix[row_num][j] = static_cast<float>(rand() % 1000) + static_cast<float>(rand() % 100) / 100.0f;
+
+    cout << "Заполнена строка № " << row_num << endl;
+    return 0;
+}
+
+// Функция потока для вычисления среднего значения строки
+DWORD WINAPI calculate_average(LPVOID param)
+{
+    int* prow_num = (int*)param;
+    int row_num = *prow_num;
+
+    float sum = 0;
+    
+    for (int j = 0; j < m; j++)
+        sum += matrix[row_num][j];
+
+    
+    row_averages[row_num] = sum / m;
+
+    cout << "Вычислено среднее для строки" << row_num << ": " << row_averages[row_num] << endl;
+    return 0;
+}
+
+int main()
+{
+    setlocale(LC_ALL, "Russian");
+    SetConsoleOutputCP(1251);
+    SetConsoleCP(1251);
+
+    HANDLE hFillThreads[n];        // потоки для заполнения 
+    HANDLE hCalcThreads[n];        // потоки для вычисления 
+    DWORD dwFillThreadID[n];
+    DWORD dwCalcThreadID[n];
+
+    for (int i = 0; i < n; i++)
+        row_numbers[i] = i;
+
+    cout << "Параллельное заполнение " << endl;
+
+   
+    for (int i = 0; i < n; i++)
+    {
+        hFillThreads[i] = CreateThread(
+            NULL,
+            0,
+            fill_row,
+            &(row_numbers[i]),
+            0,
+            &(dwFillThreadID[i])
+        );
+
+        if (hFillThreads[i] == NULL)
+        {
+            cout << "Поток для заполнения строки № " << i << " не был создан" << endl
+                << "Ошибка " << GetLastError();
+            return 1;
+        }
+    }
+
+
+    WaitForMultipleObjects(n, hFillThreads, TRUE, INFINITE);
+    cout << "Матрица заполнена" << endl << endl;
+
+    
+    for (int i = 0; i < n; i++)
+        CloseHandle(hFillThreads[i]);
+
+    // Вывод созданной матрицы
+    cout << "Созданная матрица (" << n << "x" << m << "):" << endl;
+    for (int i = 0; i < n; i++)
+    {
+        cout << "Строка " << i << ": ";
+        for (int j = 0; j < m; j++)
+        {
+            printf("%6.2f ", matrix[i][j]); 
+        }
+        cout << endl;
+    }
+    cout << endl;
+
+    cout << "Вычисление средних значений строк" << endl;
+
+    // Запуск потоков для вычисления средних значений
+    for (int i = 0; i < n; i++)
+    {
+        hCalcThreads[i] = CreateThread(
+            NULL,
+            0,
+            calculate_average,
+            &(row_numbers[i]),
+            0,
+            &(dwCalcThreadID[i])
+        );
+
+        if (hCalcThreads[i] == NULL)
+        {
+            cout << "Поток для вычисления среднего строки № " << i << " не был создан" << endl
+                << "Ошибка " << GetLastError();
+            return 1;
+        }
+    }
+
+    
+    WaitForMultipleObjects(n, hCalcThreads, TRUE, INFINITE);
+    cout << "Средние значения готовы" << endl << endl;
+
+    // Поиск строки с максимальным средним значением
+    int max_row_index = 0;
+    float max_average = row_averages[0];
+
+    for (int i = 1; i < n; i++)
+    {
+        if (row_averages[i] > max_average)
+        {
+            max_average = row_averages[i];
+            max_row_index = i;
+        }
+    }
+
+    //ывод 
+    cout << "результаты:" << endl;
+    
+    cout << "Строка с максимальным средним значением: № " << max_row_index << endl;
+    cout << "Максимальное среднее значение: " << max_average << endl << endl;
+
+    cout << "Средние значения всех строк" << endl;
+  
+    for (int i = 0; i < n; i++)
+    {
+        cout << "Строка" << i << ": " << row_averages[i];
+        if (i == max_row_index)
+            cout << " - максимум";
+        cout << endl;
+    }
+
+    
+    for (int i = 0; i < n; i++)
+        CloseHandle(hCalcThreads[i]);
+
+    return 0;
+}
