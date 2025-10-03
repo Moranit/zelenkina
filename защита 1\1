@@ -1,0 +1,144 @@
+#include <windows.h>
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <locale>
+
+using namespace std;
+
+const int m = 10, n = 20;
+float mtx[m][n];
+float col_sums[n];
+int row_numbers[m];
+int col_numbers[n];
+
+DWORD WINAPI create_row(LPVOID param)
+{
+    int* prow_num = (int*)param;
+    int row_num = *prow_num;
+
+    for (int j = 0; j < n; j++)
+        mtx[row_num][j] = static_cast<float>(rand() % 1000);
+
+    cout << "Создана строка № " << row_num << endl;
+    return 0;
+}
+
+DWORD WINAPI col_sum(LPVOID param)
+{
+    int* pcol_num = (int*)param;
+    int col_num = *pcol_num;
+
+    col_sums[col_num] = 0;
+    for (int i = 0; i < m; i++)
+        col_sums[col_num] += mtx[i][col_num];
+
+    return 0;
+}
+
+int main()
+{
+    setlocale(LC_ALL, "Russian");
+    SetConsoleOutputCP(1251);
+    SetConsoleCP(1251);
+
+    srand(static_cast<unsigned int>(time(nullptr)));
+
+    HANDLE hCreateThreads[m];
+    HANDLE hSumThreads[n];
+    DWORD dwCreateThreadID[m];
+    DWORD dwSumThreadID[n];
+
+    for (int i = 0; i < m; i++)
+        row_numbers[i] = i;
+    for (int i = 0; i < n; i++)
+        col_numbers[i] = i;
+
+    cout << "Параллельное создание матрицы..." << endl;
+
+    for (int i = 0; i < m; i++)
+    {
+        hCreateThreads[i] = CreateThread(
+            NULL,
+            0,
+            create_row,
+            &(row_numbers[i]),
+            0,
+            &(dwCreateThreadID[i])
+        );
+
+        if (hCreateThreads[i] == NULL)
+        {
+            cout << "Поток для создания строки № " << i << " не был создан" << endl
+                 << "Ошибка " << GetLastError();
+            return 1;
+        }
+    }
+
+    WaitForMultipleObjects(m, hCreateThreads, TRUE, INFINITE);
+    cout << "Матрица успешно создана!" << endl << endl;
+
+    for (int i = 0; i < m; i++)
+        CloseHandle(hCreateThreads[i]);
+
+    cout << "Созданная матрица:" << endl;
+    for (int i = 0; i < m; i++)
+    {
+        cout << "Строка " << i << ": ";
+        for (int j = 0; j < n; j++)
+        {
+            cout << mtx[i][j] << " ";
+        }
+        cout << endl;
+    }
+    cout << endl;
+
+    cout << "Запуск потоков для вычисления сумм столбцов..." << endl;
+    for (int i = 0; i < n; i++)
+    {
+        hSumThreads[i] = CreateThread(
+            NULL,
+            0,
+            col_sum,
+            &(col_numbers[i]),
+            0,
+            &(dwSumThreadID[i])
+        );
+
+        if (hSumThreads[i] == NULL)
+        {
+            cout << "Поток для суммирования столбца № " << i << " не был создан" << endl
+                 << "Ошибка " << GetLastError();
+            return 1;
+        }
+    }
+
+    WaitForMultipleObjects(n, hSumThreads, TRUE, INFINITE);
+    cout << "Суммы столбцов вычислены!" << endl << endl;
+
+    int num_min = 0;
+    float min = col_sums[0];
+    for (int i = 1; i < n; i++)
+    {
+        if (min > col_sums[i])
+        {
+            min = col_sums[i];
+            num_min = i;
+        }
+    }
+
+    cout << "Результаты вычислений:" << endl;
+    cout << "Искомый столбец № " << num_min << endl;
+    cout << "Минимальная сумма: " << min << endl << endl;
+
+    cout << "Суммы всех столбцов:" << endl;
+    for (int i = 0; i < n; i++)
+    {
+        cout << "Столбец " << i << ": " << col_sums[i] << endl;
+    }
+
+    for (int i = 0; i < n; i++)
+        CloseHandle(hSumThreads[i]);
+
+    return 0;
+}
