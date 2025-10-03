@@ -1,0 +1,161 @@
+#include <iostream>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <windows.h>
+#include <cstdlib>
+#include <ctime>
+#include <locale>
+
+using namespace std;
+
+// Функция для шифрования блока
+string encryptBlock(const string& block, const string& key) 
+{
+    string permutedBlock = block;
+    int n = block.size();
+
+
+
+    // Перестановка
+    for (int i = 0; i < n / 2; ++i) 
+    {
+        swap(permutedBlock[i], permutedBlock[n - i - 1]);
+    }
+
+    // Шифрование с использованием ключа
+    string encryptedBlock;
+    for (int i = 0; i < n; ++i) 
+    {
+        char encryptedChar = permutedBlock[i] ^ key[i % key.size()];
+        encryptedBlock += encryptedChar;
+    }
+
+    return encryptedBlock;
+}
+
+// Функция для дешифрования блока
+string decryptBlock(const string& block, const string& key) 
+{
+    string decryptedBlock = block;
+    int n = block.size();
+
+    // Шифрование с использованием ключа
+    for (int i = 0; i < n; ++i) 
+    {
+        char decryptedChar = decryptedBlock[i] ^ key[i % key.size()];
+        decryptedBlock[i] = decryptedChar;
+    }
+
+    // Обратная перестановка
+
+
+    for (int i = 0; i < n / 2; ++i) 
+    {
+        swap(decryptedBlock[i], decryptedBlock[n - i - 1]);
+    }
+
+    return decryptedBlock;
+}
+
+// Функция для шифрования текста
+vector<string> encryptText(const string& text, const string& key, int k) 
+{
+    vector<string> encryptedBlocks;
+
+    for (size_t i = 0; i < text.size(); i += k) 
+    {
+        string block = text.substr(i, k);
+        encryptedBlocks.push_back(encryptBlock(block, key));
+    }
+
+    return encryptedBlocks;
+}
+
+// Функция для дешифрования текста
+string decryptText(const vector<string>& encryptedBlocks, const string& key) 
+{
+    string decryptedText;
+
+    for (const string& block : encryptedBlocks) 
+    {
+        decryptedText += decryptBlock(block, key);
+    }
+
+    return decryptedText;
+}
+
+// Функция для преобразования шестнадцатичной строки в обычную строку
+string hexToString(const string& hex) 
+{
+    string result;
+    for (size_t i = 0; i < hex.length(); i += 2) 
+    {
+        string byte = hex.substr(i, 2);
+        char chr = (char)(int)strtol(byte.c_str(), nullptr, 16);
+        result.push_back(chr);
+    }
+    return result;
+}
+
+// Функция для преобразования строки в шестнадцатичную
+string toHex(const string& str) 
+{
+    stringstream hexStream;
+    for (unsigned char c : str) 
+    {
+        hexStream << setw(2) << setfill('0') << hex << (int)c;
+    }
+    return hexStream.str();
+}
+
+int main() 
+{
+    setlocale(LC_ALL, "Russian");
+    SetConsoleOutputCP(1251);
+    SetConsoleCP(1251);
+    string text;
+    string key;
+    int k;
+
+    // Шифрование
+    cout << "Введите текст для шифрования: ";
+    getline(cin, text);
+    cout << "Введите ключ: ";
+    getline(cin, key);
+    cout << "Введите длину блока (k): ";
+    cin >> k;
+
+    vector<string> encryptedBlocks = encryptText(text, key, k);
+
+    cout << "Зашифрованный текст (в шестнадцатичном формате):" << endl;
+    for (const string& block : encryptedBlocks) 
+    {
+        cout << toHex(block);
+    }
+    cout << endl;
+
+    // Дешифрование
+    string hexText;
+    cout << "Введите зашифрованный текст в шестнадцатичном формате для дешифрования: ";
+    cin.ignore(); // Очистка буфера
+    getline(cin, hexText);
+
+    string encryptedText = hexToString(hexText);
+    vector<string> decryptedBlocks;
+
+    for (size_t i = 0; i < encryptedText.size(); i += k) 
+    {
+        string block = encryptedText.substr(i, k);
+
+        decryptedBlocks.push_back(block);
+    }
+
+    string decryptedText = decryptText(decryptedBlocks, key);
+
+    cout << "Дешифрованный текст: " << decryptedText << endl;
+
+    return 0;
+}
