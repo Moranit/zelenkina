@@ -1,0 +1,205 @@
+#include <windows.h>
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <locale>
+
+using namespace std;
+
+const int n = 4;  // матрица 4x4
+int matrix[n][n];
+int row_numbers[n];
+
+// Функция потока для заполнения строки матрицы
+DWORD WINAPI fill_row(LPVOID param)
+{
+    int* prow_num = (int*)param;
+    int row_num = *prow_num;
+
+    
+    unsigned int seed = time(nullptr) + row_num * 1000 + GetCurrentThreadId();
+    srand(seed);
+
+    //  от 0 до 9
+    for (int j = 0; j < n; j++)
+        matrix[row_num][j] = rand() % 10;
+
+    cout << "Заполнена строка № " << row_num << endl;
+    return 0;
+}
+
+// дляопределителя матрицы 3x3
+int determinant3x3(int m[3][3]) 
+{
+    return m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) -
+        m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) +
+        m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+}
+
+// Функция для получения минора 3x3
+void getMinor(int source[n][n], int minor[3][3], int row, int col) 
+{
+    int minor_i = 0;
+    for (int i = 0; i < n; i++) {
+        if (i == row) continue;
+        int minor_j = 0;
+        for (int j = 0; j < n; j++) {
+            if (j == col) continue;
+            minor[minor_i][minor_j] = source[i][j];
+            minor_j++;
+        }
+        minor_i++;
+    }
+}
+
+
+struct ThreadData 
+{
+    int (*matrix)[n];
+    int col;
+    int result;
+};
+
+DWORD WINAPI calculate_determinant_part(LPVOID param) 
+{
+    ThreadData* data = (ThreadData*)param;
+
+    // Вычисляем минор для элемента (0, col)
+    int minor[3][3];
+    getMinor(data->matrix, minor, 0, data->col);
+
+    // Вычисляем определитель минора
+    int minorDet = determinant3x3(minor);
+
+    // Вычисляем элемент разложения: (-1)^(0+col) * a[0][col] * det(minor)
+    data->result = ((data->col % 2 == 0) ? 1 : -1) * data->matrix[0][data->col] * minorDet;
+
+    cout << "Поток для столбца " << data->col << ": "
+        << data->matrix[0][data->col] << " * "
+        << ((data->col % 2 == 0) ? "" : "-") << minorDet
+        << " = " << data->result << endl;
+
+    return 0;
+}
+
+// Функция для вычисления определителя матрицы 4x4
+int calculate_determinant() {
+    HANDLE threads[n];
+    ThreadData threadData[n];
+    int det = 0;
+
+    cout << "Вычисление определителя разложением по первой строке:" << endl;
+    
+
+    //  для каждого элемента первой строки
+    for (int j = 0; j < n; j++) 
+    {
+        threadData[j].matrix = matrix;
+        threadData[j].col = j;
+        threadData[j].result = 0;
+
+        threads[j] = CreateThread
+        (
+            NULL,
+            0,
+            calculate_determinant_part,
+            &threadData[j],
+            0,
+            NULL
+        );
+
+        if (threads[j] == NULL) 
+        {
+            cout << "Ошибка создания потока для столбца " << j << endl;
+            return 0;
+        }
+    }
+
+    // Ждем завершения всех потоков
+    WaitForMultipleObjects(n, threads, TRUE, INFINITE);
+
+    // Суммируем результаты
+    for (int j = 0; j < n; j++) 
+    {
+        det += threadData[j].result;
+        CloseHandle(threads[j]);
+    }
+
+    return det;
+}
+
+int main()
+{
+    setlocale(LC_ALL, "Russian");
+    SetConsoleOutputCP(1251);
+    SetConsoleCP(1251);
+
+    HANDLE hFillThreads[n];
+    DWORD dwFillThreadID[n];
+
+    for (int i = 0; i < n; i++)
+        row_numbers[i] = i;
+
+    cout << " создание матрицы 4x4" << endl;
+
+    // Запуск потоков для заполнения матрицы
+    for (int i = 0; i < n; i++)
+    {
+        hFillThreads[i] = CreateThread
+        (
+            NULL,
+            0,
+            fill_row,
+            &(row_numbers[i]),
+            0,
+            &(dwFillThreadID[i])
+        );
+
+
+
+        if (hFillThreads[i] == NULL)
+        {
+            cout << "Поток для создания строки № " << i << " не был создан" << endl
+                << "Ошибка " << GetLastError();
+            return 1;
+        }
+    }
+
+    
+    WaitForMultipleObjects(n, hFillThreads, TRUE, INFINITE);
+    cout << "Матрица успешно заполнена" << endl << endl;
+
+    
+    for (int i = 0; i < n; i++)
+        CloseHandle(hFillThreads[i]);
+
+    // Вывод исходной матрицы
+    cout << "Исходная матрица 4x4:" << endl;
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            cout << matrix[i][j] << "\t";
+        }
+        cout << endl;
+    }
+    cout << endl;
+
+    // Вычисление 
+    int det = calculate_determinant();
+
+    
+    cout << "Определитель: " << det << endl;
+
+    // Проверка на вырожденность
+    if (det == 0) 
+    {
+        cout << "Матрица вырожденная (определитель = 0)" << endl;
+    }
+    else 
+    {
+        cout << "Матрица невырожденная" << endl;
+    }
+
+    return 0;
+}
