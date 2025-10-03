@@ -1,0 +1,166 @@
+#include <windows.h>
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <locale>
+
+using namespace std;
+
+const int n = 10, m = 5;
+float matrix[n][m];
+int row_numbers[n];
+int col_numbers[m];
+
+// Функция потока для заполнения строки матрицы
+DWORD WINAPI fill_row(LPVOID param)
+{
+    int* prow_num = (int*)param;
+    int row_num = *prow_num;
+
+    
+    unsigned int seed = time(nullptr) + row_num * 1000 + GetCurrentThreadId();
+    srand(seed);
+
+    // Заполняем строку случайными вещественными числами
+    for (int j = 0; j < m; j++)
+        matrix[row_num][j] = static_cast<float>(rand() % 1000) + static_cast<float>(rand() % 100) / 100.0f;
+
+    cout << "Заполнена строка № " << row_num << endl;
+    return 0;
+}
+
+
+DWORD WINAPI sort_column(LPVOID param)
+{
+    int* pcol_num = (int*)param;
+    int col_num = *pcol_num;
+
+    cout << "Сортировка столбца № " << col_num << endl;
+
+    // Метод обмена 
+    for (int i = 0; i < n - 1; i++)
+    {
+        for (int j = 0; j < n - i - 1; j++)
+        {
+            if (matrix[j][col_num] > matrix[j + 1][col_num])
+            {
+                
+                float temp = matrix[j][col_num];
+
+
+                matrix[j][col_num] = matrix[j + 1][col_num];
+                matrix[j + 1][col_num] = temp;
+            }
+        }
+    }
+
+    cout << "Столбец № " << col_num << " отсортирован" << endl;
+    return 0;
+}
+
+
+
+
+int main()
+{
+    setlocale(LC_ALL, "Russian");
+    SetConsoleOutputCP(1251);
+    SetConsoleCP(1251);
+
+    HANDLE hFillThreads[n];
+    HANDLE hSortThreads[m];
+    DWORD dwFillThreadID[n];
+    DWORD dwSortThreadID[m];
+
+    // Инициализация массивов
+    for (int i = 0; i < n; i++)
+        row_numbers[i] = i;
+    for (int j = 0; j < m; j++)
+        col_numbers[j] = j;
+
+    cout << "Параллельное заполнение матрицы" << endl;
+
+    // Запуск потоков для заполнения матрицы
+    for (int i = 0; i < n; i++)
+    {
+        hFillThreads[i] = CreateThread(
+            NULL,
+            0,
+            fill_row,
+            &(row_numbers[i]),
+            0,
+            &(dwFillThreadID[i])
+        );
+
+        if (hFillThreads[i] == NULL)
+        {
+            cout << "Поток для заполнения строки № " << i << " не был создан" << endl
+                << "Ошибка " << GetLastError();
+            return 1;
+        }
+    }
+
+    
+    WaitForMultipleObjects(n, hFillThreads, TRUE, INFINITE);
+    cout << "Матрица успешно заполнена" << endl << endl;
+
+    
+    for (int i = 0; i < n; i++)
+        CloseHandle(hFillThreads[i]);
+
+    // Вывод
+    cout << "Исходная матрица:" << endl;
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < m; j++)
+        {
+            printf("%6.1f ", matrix[i][j]);
+        }
+        cout << endl;
+    }
+    cout << endl;
+
+
+    cout << "Параллельная сортировка столбцов" << endl;
+
+    //  для сортировки столбцов
+    for (int j = 0; j < m; j++)
+    {
+        hSortThreads[j] = CreateThread(
+            NULL,
+            0,
+            sort_column,
+            &(col_numbers[j]),
+            0,
+            &(dwSortThreadID[j])
+        );
+
+        if (hSortThreads[j] == NULL)
+        {
+            cout << "Поток для сортировки столбца № " << j << " не был создан" << endl
+                << "Ошибка " << GetLastError();
+            return 1;
+        }
+    }
+
+    
+    WaitForMultipleObjects(m, hSortThreads, TRUE, INFINITE);
+    cout << "Все столбцы отсортированы!" << endl << endl;
+
+    // Вывод отсортированной 
+    cout << "Отсортированная матрица:" << endl;
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < m; j++)
+        {
+            printf("%6.1f ", matrix[i][j]);
+        }
+        cout << endl;
+    }
+
+    
+    for (int j = 0; j < m; j++)
+        CloseHandle(hSortThreads[j]);
+
+    return 0;
+}
