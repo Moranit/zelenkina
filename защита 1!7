@@ -1,0 +1,124 @@
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <queue>
+#include <vector>
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <algorithm>
+#include <windows.h>
+#include <cstdlib>
+#include <ctime>
+#include <locale>
+
+using namespace std;
+
+// Структура узла бинарного дерева
+struct Node 
+{
+    int value;
+    Node* left;
+    Node* right;
+
+    Node(int val) : value(val), left(nullptr), right(nullptr) {}
+};
+
+// для вставки значения 
+Node* insert(Node* root, int value) 
+{
+    if (root == nullptr) 
+    {
+        return new Node(value);
+    }
+    if (value < root->value)
+    {
+        root->left = insert(root->left, value);
+    }
+    else
+    {
+        root->right = insert(root->right, value);
+    }
+    return root;
+}
+
+//  для вычисления суммы узлов 
+int sum(Node* root) 
+{
+    if (root == nullptr) 
+    {
+        return 0;
+    }
+
+    int leftSum = sum(root->left);
+    int rightSum = sum(root->right);
+
+    return root->value + leftSum + rightSum;
+}
+
+//  для отображения  дерева
+void printTree(Node* root, int space = 0, int level = 0) 
+{
+    const int COUNT = 10;
+    if (root == nullptr) 
+    {
+        return;
+    }
+
+    
+    space += COUNT;
+
+    
+    printTree(root->right, space);
+
+    
+    cout << endl;
+    for (int i = COUNT; i < space; i++) 
+    {
+        cout << " ";
+    }
+    cout << root->value << "\n";
+
+    
+    printTree(root->left, space);
+}
+
+
+int main() 
+{
+    setlocale(LC_ALL, "Russian");
+    SetConsoleOutputCP(1251);
+    SetConsoleCP(1251);
+    Node* root = nullptr;
+
+    
+    root = insert(root, 10);
+    insert(root, 5);
+    insert(root, 15);
+    insert(root, 3);
+    insert(root, 7);
+    insert(root, 12);
+    insert(root, 18);
+
+    // вывод дерева
+    cout << "Бинарное дерево:" << endl;
+    printTree(root);
+
+    // Вычисление суммы элементов дерева в отдельных потоках
+    int totalSum = 0;
+    thread sumThread([&]() 
+        {
+        totalSum = sum(root);
+        });
+
+    
+
+    sumThread.join();
+
+    cout << "Сумма элементов бинарного дерева: " << totalSum << endl;
+
+    
+
+
+    return 0;
+}
